@@ -2,6 +2,7 @@ package com.example.passwordmanager;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.annotation.SuppressLint;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
@@ -12,48 +13,41 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import java.util.Set;
+import java.util.SortedMap;
 
 public class Signup extends AppCompatActivity {
     EditText username = null, password = null;
     Button signup = null;
     TextView gotologin = null;
 
-    static {
-        System.loadLibrary("main");
-    }
-
-    private native String createSecureHash(String Password);
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_signup);
 
-        Log.d(MainActivity.LOG_TAG, "Created hash: " + createSecureHash("pass123"));
-
-        SharedPreferences sharedprefs = getApplicationContext().getSharedPreferences(MainActivity.PREF_ID, 0);
-        Set<String> user_pref = sharedprefs.getStringSet(MainActivity.TAG_USER, null);
-        Set<String> pass_pref = sharedprefs.getStringSet(MainActivity.TAG_PASS, null);
-
-        username = findViewById(R.id.loginusername);
-        password = findViewById(R.id.loginpassword);
+        username = findViewById(R.id.signupusername);
+        password = findViewById(R.id.signuppassword);
         signup = findViewById(R.id.signup);
         gotologin = findViewById(R.id.goto_login);
+
+        StoredData data = new StoredData(getApplicationContext());
 
         signup.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if (username.getText().toString() == "") {
-                    Toast.makeText(getApplicationContext(), "No username", 3).show();
+                String newuser = username.getText().toString();
+                String newpass = password.getText().toString();
+
+                if (newuser.length() == 0) {
+                    Toast.makeText(getApplicationContext(), "No username", (int)3).show();
                     return;
                 }
-                if (password.getText().toString() == "") {
-                    Toast.makeText(getApplicationContext(), "No password", 3).show();
+                if (newpass.length() == 0) {
+                    Toast.makeText(getApplicationContext(), "No password", (int)3).show();
                     return;
                 }
 
-                user_pref.add(username.getText().toString());
-                pass_pref.add(createSecureHash(password.getText().toString()));
+                if (data.addUser(newuser, newpass)) finish();
             }
         });
     }
