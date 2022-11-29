@@ -121,21 +121,42 @@ Java_com_example_passwordmanager_StoredData_encryptData(JNIEnv *env, jobject thi
 	free(aeskey.key);
 
 	size_t dlen = ddata.length();
-	__android_log_print(ANDROID_LOG_ERROR, "APP_DEBUG", "%d", dlen);
-	char hexdata[dlen * 2 + 1];
+	char hexdata[dlen * 2 + 1]; memset(hexdata, 0, dlen * 2 + 1);
 	uint32_t i, ii = 0;
-	for (i = 0; i < dlen / 2; i++) {
+	for (i = 0; i < dlen; i++) {
 		hexdata[ii * 2 + 0] = HEXVAL[(ddata[i] & 0xF0) >> 4];
 		hexdata[ii * 2 + 1] = HEXVAL[(ddata[i] & 0x0F) >> 0];
 		ii++;
 	}
-	hexdata[++ii] = '\0';
+
 	return env->NewStringUTF(hexdata);
 }
 
 extern "C" JNIEXPORT jstring JNICALL
 Java_com_example_passwordmanager_StoredData_decryptData(JNIEnv *env, jobject thiz, jstring data, jstring key, jstring encr) {
-	return env->NewStringUTF("");
+	const char* cc_key = env->GetStringUTFChars(key, 0);
+	const char* cc_data = env->GetStringUTFChars(data, 0);
+	int cc_data_len = strlen(cc_data);
+
+	uint8_t hash[DEFAULT_HASH_LENGTH];
+	char hex_hash[HEXHASH_LENGTH];
+	createHash(hex_hash, cc_key, NULL, hash);
+
+	AESKeySet aeskey;
+	aeskey.key = (uint8_t*)malloc(DEFAULT_HASH_LENGTH);
+	memcpy(aeskey.key, hash, DEFAULT_HASH_LENGTH);
+	initAESKey(Encryption::AES256, &aeskey);
+
+	int byte_len = cc_data_len / 2;
+	char bytedata[byte_len + 1];
+	for (size_t i = 0; i < byte_len; i++) {
+		bytedata[i] = (hextoval(cc_data[i * 2 + 0]) << 4) | (hextoval(cc_data[i * 2 + 1]) << 0);
+	}
+
+	decryptAES(bytedata, byte_len, &aeskey);
+	free(aeskey.key);
+	bytedata[byte_len + 1] = '\0';
+	return env->NewStringUTF(bytedata);
 }
 
 extern "C" JNIEXPORT jstring JNICALL

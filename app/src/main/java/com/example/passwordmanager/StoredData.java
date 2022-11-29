@@ -18,6 +18,7 @@ public class StoredData {
 
     static final String PREF_ID = "pref";
     static final String TAG_USER = "user";
+    static final String TAG_DATA = "data_";
 
     public SharedPreferences sharedprefs;
     public Set<String> userdata;
@@ -92,18 +93,39 @@ public class StoredData {
         return !(userdata == null || userdata.size() == 0);
     }
 
-    public void saveData(String username, String password, String data, String tag) {
+    public String newdatatag(String username, String id) {
+        int i = 0;
+        String ttag;
+        do {
+            ttag = TAG_DATA + username + id + (i++);
+        } while (!sharedprefs.getString(ttag, "").equals(""));
+        return ttag;
+    }
+    public String getdatatag(String username, String id, int i) {
+        return sharedprefs.getString(TAG_DATA + username + id + i, "");
+    }
+
+    public void saveData(String username, String password, String data, String id) {
         int uid = getUserIndex(username);
         if (uid != -1) {
-            String edata = encryptData( data, password,"AES256"); Log.d(MainActivity.LOG_TAG, edata);
-            //String ddata = decryptData(edata, password,"AES256"); Log.d(MainActivity.LOG_TAG, ddata);
+            String ntag = newdatatag(username, id); Log.e(MainActivity.LOG_TAG, ntag);
+            String edata = encryptData(data, password,"AES256"); Log.e(MainActivity.LOG_TAG, "ENCR = " + edata);
+            sharedprefs.edit().putString(ntag, edata).apply();
         }
     }
 
-    public void getData(String username, String password) {
+    public void getAllData(String username, String password, String id) {
         int uid = getUserIndex(username);
         if (uid != -1) {
-
+            int i = 0;
+            String edata;
+            while (true) {
+                edata = getdatatag(username, id, i++);
+                if (!edata.equals("")) {
+                    Log.d(MainActivity.LOG_TAG, edata);
+                    String ddata = decryptData(edata, password,"AES256"); Log.e(MainActivity.LOG_TAG, "DECR = " + ddata);
+                } else break;
+            }
         }
     }
 }

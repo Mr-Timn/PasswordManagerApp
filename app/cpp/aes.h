@@ -342,16 +342,14 @@ struct AESKeySet {
 
 	size_t paddingpos(size_t len) {
 		switch (mode) {
-			case 0: return len - 1; break;
-			case 1: return len - 1 - 16; break;
-			default: return 0;
+			case AESMode::ECB: return len - 1;
+			case AESMode::CBC: return len - 1 - 16;
 		}
 	}
 	size_t paddinglen(size_t len) {
 		switch (mode) {
-			case 0: return 16 - (len % 16); break;
-			case 1: return 32 - (len % 16); break;
-			default: return 0;
+			case AESMode::ECB: return 16 - (len % 16);
+			case AESMode::CBC: return 32 - (len % 16);
 		}
 	}
 
@@ -456,7 +454,7 @@ size_t encryptAES(std::string& Data, AESKeySet* KeySet) {
 
 size_t decryptAES(char* Data, size_t Length, AESKeySet* KeySet) {
 	if (Length % 16 != 0) {
-		printf("Cannot decrypt aes data of size %zu\n", Length);
+		__android_log_print(ANDROID_LOG_ERROR, "APP_DEBUG", "Cannot decrypt aes data of size %zu", Length);
 		return 0;
 	}
 
@@ -482,7 +480,7 @@ size_t decryptAES(char* Data, size_t Length, AESKeySet* KeySet) {
 	// Remove padding
 	size_t padpos = KeySet->paddingpos(Length);
 	uint8_t pad = (uint8_t)Data[padpos];
-	if (pad > 16) { printf("Can't decrypt AES data [%u] - Corrupted padding\n", pad); return 0; }
+	if (pad > 16) { __android_log_print(ANDROID_LOG_ERROR, "APP_DEBUG","Can't decrypt AES data [%zu] - Corrupted padding", Length); return 0; }
 	Length = padpos - pad + 1;
 	Data[Length] = '\0';
 	return Length;
