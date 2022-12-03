@@ -30,7 +30,7 @@ public class Login extends AppCompatActivity {
         login = findViewById(R.id.login);
         gotosignup = findViewById(R.id.goto_signup);
 
-        StoredData data = new StoredData(getApplicationContext());
+        StoredData data = new StoredData(getApplicationContext(), null);
         if (!data.hasUsers()) {
             Toast.makeText(getApplicationContext(), "No accounts", (int)3).show();
             finish();

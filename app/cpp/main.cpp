@@ -41,7 +41,6 @@ void createHash(char* hex_hash, const char* cc_pass, const char* cc_salt, uint8_
 	srand(time(NULL));
 
 	int cc_pass_len = strlen(cc_pass);
-	int cc_salt_len;
 
 	argon2_type type = argon2_type::Argon2_d;
 	uint32_t version = ARGON2_VERSION_13;
@@ -51,54 +50,40 @@ void createHash(char* hex_hash, const char* cc_pass, const char* cc_salt, uint8_
 	uint32_t hash_len = DEFAULT_HASH_LENGTH;
 	uint32_t salt_len = DEFAULT_SALT_LENGTH;
 
-	uint8_t* ssalt = (uint8_t*)malloc(salt_len);
+	uint8_t salt[salt_len];
+	char ssalt[salt_len * 2];
 
 	// Empty salt
 	if (cc_salt == NULL) {
-		cc_salt_len = DEFAULT_HASH_LENGTH * 2;
-		for (uint32_t i = 0; i < cc_salt_len; i++) ssalt[i] = '\0';
+		for (uint32_t i = 0; i < salt_len * 2; i++) ssalt[i] = '0';
 	} else {
-		cc_salt_len = strlen(cc_salt);
-
 		// Load salt
-		if (cc_salt_len) {
-			ssalt = (uint8_t*)realloc(ssalt, cc_salt_len);
-			for (uint32_t i = 0; i < cc_salt_len; i++) ssalt[i] = cc_salt[i];
+		if (strlen(cc_salt)) {
+			for (uint32_t i = 0; i < salt_len * 2; i++) ssalt[i] = cc_salt[i];
 		// Random salt
 		} else {
-			cc_salt_len = salt_len * 2;
-			for (uint32_t i = 0; i < cc_salt_len * 2; i++) ssalt[i] = (uint8_t)rand();
+			for (uint32_t i = 0; i < salt_len * 2; i++) ssalt[i] = HEXVAL[rand() % 16];
 		}
 	}
 
-	uint8_t salt[cc_salt_len / 2];
-	for (uint32_t i = 0; i < cc_salt_len / 2; i++) {
-		salt[i] = (hextoval(ssalt[i * 2 + 0]) << 4) | (hextoval(ssalt[i * 2 + 1]) << 0);
-	}
+	for (uint32_t i = 0; i < salt_len; i++) salt[i] = (hextoval(ssalt[i * 2 + 0]) << 4) | (hextoval(ssalt[i * 2 + 1]) << 0);
 
 	if (argon2_hash(t_cost, m_cost, parallelism, cc_pass, cc_pass_len, salt, salt_len, hash, hash_len, NULL, 0, type, version) != 0) {
 		__android_log_print(ANDROID_LOG_ERROR, "APP_DEBUG", "Failed to hash argon2");
 		hex_hash[0] = '\0';
+		free(ssalt);
 		return;
 	}
 
 	uint32_t i, ii = 0;
-	for (i = 0; i < hash_len; i++) {
-		hex_hash[ii * 2 + 0] = HEXVAL[(hash[i] & 0xF0) >> 4];
-		hex_hash[ii * 2 + 1] = HEXVAL[(hash[i] & 0x0F) >> 0];
-		ii++;
+	for (i = 0; i < DEFAULT_HASH_LENGTH; i++) {
+		hex_hash[ii++] = HEXVAL[(hash[i] & 0xF0) >> 4];
+		hex_hash[ii++] = HEXVAL[(hash[i] & 0x0F) >> 0];
 	}
-	hex_hash[ii * 2 + 0] = '_';
-	hex_hash[ii * 2 + 1] = '_';
-	ii++;
-	for (i = 0; i < salt_len; i++) {
-		hex_hash[ii * 2 + 0] = HEXVAL[(salt[i] & 0xF0) >> 4];
-		hex_hash[ii * 2 + 1] = HEXVAL[(salt[i] & 0x0F) >> 0];
-		ii++;
-	}
-	hex_hash[ii * 2] = '\0';
-
-	free(ssalt);
+	hex_hash[ii++] = '_';
+	hex_hash[ii++] = '_';
+	for (i = 0; i < salt_len * 2; i++) hex_hash[ii++] = ssalt[i];
+	hex_hash[ii] = '\0';
 }
 
 extern "C" JNIEXPORT jstring JNICALL
@@ -153,10 +138,15 @@ Java_com_example_passwordmanager_StoredData_decryptData(JNIEnv *env, jobject thi
 		bytedata[i] = (hextoval(cc_data[i * 2 + 0]) << 4) | (hextoval(cc_data[i * 2 + 1]) << 0);
 	}
 
-	decryptAES(bytedata, byte_len, &aeskey);
+	size_t v = decryptAES(bytedata, byte_len, &aeskey);
 	free(aeskey.key);
-	bytedata[byte_len + 1] = '\0';
-	return env->NewStringUTF(bytedata);
+
+	if (v) {
+		bytedata[byte_len + 1] = '\0';
+		return env->NewStringUTF(bytedata);
+	}
+
+	return env->NewStringUTF("");
 }
 
 extern "C" JNIEXPORT jstring JNICALL

@@ -3,6 +3,7 @@ package com.example.passwordmanager;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.annotation.SuppressLint;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
@@ -16,9 +17,9 @@ import java.util.Set;
 import java.util.SortedMap;
 
 public class Signup extends AppCompatActivity {
-    EditText username = null, password = null;
-    Button signup = null;
-    TextView gotologin = null;
+    EditText username, password;
+    Button signup;
+    TextView gotologin;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -30,7 +31,7 @@ public class Signup extends AppCompatActivity {
         signup = findViewById(R.id.signup);
         gotologin = findViewById(R.id.goto_login);
 
-        StoredData data = new StoredData(getApplicationContext());
+        StoredData data = new StoredData(getApplicationContext(), null);
 
         signup.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -47,7 +48,13 @@ public class Signup extends AppCompatActivity {
                     return;
                 }
 
-                if (data.addUser(newuser, newpass)) finish();
+                if (data.addUser(newuser, newpass)) {
+                    Intent data = new Intent();
+                    data.putExtra(MainActivity.RESULT_TAG_USER, newuser);
+                    data.putExtra(MainActivity.RESULT_TAG_PASS, newpass);
+                    setResult(RESULT_OK, data);
+                    finish();
+                }
             }
         });
     }

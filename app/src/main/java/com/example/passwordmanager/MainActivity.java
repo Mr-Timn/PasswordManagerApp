@@ -20,6 +20,7 @@ public class MainActivity extends AppCompatActivity implements DefaultLifecycleO
     public static final String LOG_TAG = "APP_DEBUG";
     public static final String RESULT_TAG_USER = "infouser";
     public static final String RESULT_TAG_PASS = "passuser";
+    public static final String RESULT_TAG_INDPASS = "passindex";
 
     Intent signup, login, menu;
 
@@ -30,17 +31,12 @@ public class MainActivity extends AppCompatActivity implements DefaultLifecycleO
             Intent data = result.getData();
             int rescode = result.getResultCode();
 
-            if (intent == menu) {
-                lauchActivity(login);
-            }
+            if (intent == menu) lauchActivity(login);
 
-            if (intent == login && rescode == Activity.RESULT_OK) {
-                String username = data.getStringExtra(RESULT_TAG_USER);
-                String password = data.getStringExtra(RESULT_TAG_PASS);
-
+            if ((intent == login || intent == signup) && rescode == Activity.RESULT_OK) {
                 menu = new Intent(getApplicationContext(), MainMenu.class);
-                menu.putExtra(RESULT_TAG_USER, username);
-                menu.putExtra(RESULT_TAG_PASS, password);
+                menu.putExtra(RESULT_TAG_USER, data.getStringExtra(RESULT_TAG_USER));
+                menu.putExtra(RESULT_TAG_PASS, data.getStringExtra(RESULT_TAG_PASS));
                 lauchActivity(menu);
             }
         });
@@ -56,7 +52,7 @@ public class MainActivity extends AppCompatActivity implements DefaultLifecycleO
         signup = new Intent(getApplicationContext(), Signup.class);
         login = new Intent(getApplicationContext(), Login.class);
 
-        StoredData data = new StoredData(getApplicationContext());
+        StoredData data = new StoredData(getApplicationContext(), null);
         if (!data.hasUsers()) {
             lauchActivity(signup);
         } else {

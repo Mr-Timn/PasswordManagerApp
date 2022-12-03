@@ -1,6 +1,7 @@
 package com.example.passwordmanager;
 
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.util.Log;
 import android.widget.Toast;
@@ -16,18 +17,26 @@ public class StoredData {
     private native String encryptData(String Data, String Key, String Encryption);
     private native String decryptData(String Data, String Key, String Encryption);
 
-    static final String PREF_ID = "pref";
-    static final String TAG_USER = "user";
-    static final String TAG_DATA = "data_";
+    static final String PREF_ID = "temppref12";
+    static final String TAG_USER = "tempuser";
+    static final String TAG_DATA = "tempdata_";
+
+    public static final String ID_PASS = "/pass/";
+    public static final String ID_NOTE = "/note/";
+    public static final String DATA_DELIM = "\\//\\\\//\\";
 
     public SharedPreferences sharedprefs;
     public Set<String> userdata;
 
     private ArrayList<String> user_array, pass_array, salt_array;
     private Context appcontext;
+    private Intent appintent;
+    public String username = "", password = "";
 
-    public StoredData(Context context) {
+    public StoredData(Context context, Intent intent) {
         appcontext = context;
+        appintent = intent;
+
         sharedprefs = appcontext.getSharedPreferences(PREF_ID, 0);
         userdata = sharedprefs.getStringSet(TAG_USER, null);
 
@@ -48,6 +57,11 @@ public class StoredData {
                 pass_array.add(tpass);
                 salt_array.add(tsalt);
             }
+        }
+
+        if (appintent != null) {
+            username = appintent.getStringExtra(MainActivity.RESULT_TAG_USER);
+            password = appintent.getStringExtra(MainActivity.RESULT_TAG_PASS);
         }
     }
 
@@ -93,39 +107,50 @@ public class StoredData {
         return !(userdata == null || userdata.size() == 0);
     }
 
-    public String newdatatag(String username, String id) {
+    public String newdatatag(String id) {
         int i = 0;
         String ttag;
         do {
-            ttag = TAG_DATA + username + id + (i++);
+            ttag = getdatatag(id, i++);
         } while (!sharedprefs.getString(ttag, "").equals(""));
         return ttag;
     }
-    public String getdatatag(String username, String id, int i) {
-        return sharedprefs.getString(TAG_DATA + username + id + i, "");
+    public String getdatatag(String id, int i) {
+        return TAG_DATA + username + id + i;
     }
 
-    public void saveData(String username, String password, String data, String id) {
-        int uid = getUserIndex(username);
-        if (uid != -1) {
-            String ntag = newdatatag(username, id); Log.e(MainActivity.LOG_TAG, ntag);
-            String edata = encryptData(data, password,"AES256"); Log.e(MainActivity.LOG_TAG, "ENCR = " + edata);
-            sharedprefs.edit().putString(ntag, edata).apply();
-        }
+    public void saveData(String data, String id) {
+        String ntag = newdatatag(id); Log.e(MainActivity.LOG_TAG, ntag);
+        String edata = encryptData(data, password,"AES256"); Log.e(MainActivity.LOG_TAG, "ENCR = " + edata);
+        sharedprefs.edit().putString(ntag, edata).apply();
+    }
+    public void editData(String data, String id, int i) {
+        String ntag = getdatatag(id, i); Log.e(MainActivity.LOG_TAG, ntag);
+        String edata = encryptData(data, password,"AES256"); Log.e(MainActivity.LOG_TAG, "ENCR = " + edata);
+        sharedprefs.edit().putString(ntag, edata).apply();
     }
 
-    public void getAllData(String username, String password, String id) {
+    public String getData(String id, int i) {
+        String d = sharedprefs.getString(getdatatag(id, i), ""); Log.e(MainActivity.LOG_TAG, d);
+        if (d.equals("")) return "";
+        return decryptData(d, password,"AES256");
+    }
+    public ArrayList<String> getAllPasswords() {
+        return getAllData(ID_PASS);
+    }
+    public ArrayList<String> getAllData(String id) {
+        ArrayList<String> data = new ArrayList<String>();
+
         int uid = getUserIndex(username);
         if (uid != -1) {
             int i = 0;
-            String edata;
             while (true) {
-                edata = getdatatag(username, id, i++);
-                if (!edata.equals("")) {
-                    Log.d(MainActivity.LOG_TAG, edata);
-                    String ddata = decryptData(edata, password,"AES256"); Log.e(MainActivity.LOG_TAG, "DECR = " + ddata);
-                } else break;
+                String d = getData(id, i++);
+                if (!d.equals("")) data.add(d);
+                else break;
             }
         }
+
+        return data;
     }
 }

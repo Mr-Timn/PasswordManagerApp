@@ -13,10 +13,13 @@ import android.widget.TextView;
 public class MainMenu extends AppCompatActivity {
 
     TextView title = null;
-    Button addpass = null, addnote = null, logout = null;
-    Intent addpassintent = null;
+    Button addpass, addnote, viewpass, viewnote, logout;
+    StoredData data;
 
-    public void lauchActivity(Intent intent) {
+    public void lauchActivity(Class<?> c) {
+        Intent intent = new Intent(getApplicationContext(), c);
+        intent.putExtra(MainActivity.RESULT_TAG_USER, data.username);
+        intent.putExtra(MainActivity.RESULT_TAG_PASS, data.password);
         MainActivity.activityLauncher.launch(intent, result -> {
             Intent data = result.getData();
             int rescode = result.getResultCode();
@@ -28,37 +31,38 @@ public class MainMenu extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main_menu);
 
-        //StoredData data = new StoredData(getApplicationContext());
-
-        String username = getIntent().getStringExtra(MainActivity.RESULT_TAG_USER);
-        String password = getIntent().getStringExtra(MainActivity.RESULT_TAG_PASS);
-
-        Log.d(MainActivity.LOG_TAG, username);
-        Log.d(MainActivity.LOG_TAG, password);
+        data = new StoredData(getApplicationContext(), getIntent());
 
         title = findViewById(R.id.menu_title);
-        title.setText(username);
-
         addpass = findViewById(R.id.addpassword);
         addnote = findViewById(R.id.addnote);
+        viewpass = findViewById(R.id.viewpasswords);
+        viewnote = findViewById(R.id.viewnotes);
         logout = findViewById(R.id.logout);
 
+        title.setText(data.username);
         addpass.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if (addpassintent == null) {
-                    addpassintent = new Intent(getApplicationContext(), AddPassword.class);
-                    addpassintent.putExtra(MainActivity.RESULT_TAG_USER, username);
-                    addpassintent.putExtra(MainActivity.RESULT_TAG_PASS, password);
-                }
-                lauchActivity(addpassintent);
+                lauchActivity(AddPassword.class);
             }
         });
         addnote.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Intent intent = new Intent(getApplicationContext(), AddNote.class);
-                lauchActivity(intent);
+                lauchActivity(AddNote.class);
+            }
+        });
+        viewpass.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                lauchActivity(ViewPasswords.class);
+            }
+        });
+        viewnote.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                lauchActivity(ViewNotes.class);
             }
         });
         logout.setOnClickListener(new View.OnClickListener() {
