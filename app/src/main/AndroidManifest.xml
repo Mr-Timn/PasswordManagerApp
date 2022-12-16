@@ -9,7 +9,8 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.PasswordManager">
-        <activity android:name=".EditPassword"></activity>
+        <activity android:name=".EditNote"></activity>
+        <activity android:name=".EditPassword" />
         <activity android:name=".ViewNotes" />
         <activity android:name=".AddNote" />
         <activity android:name=".AddPassword" />

@@ -3,6 +3,7 @@ package com.example.passwordmanager;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -16,6 +17,8 @@ public class AddNote extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_add_note);
+
+        data = new StoredData(getApplicationContext(), getIntent());
 
         addtitle = findViewById(R.id.addnote_title);
         addtext = findViewById(R.id.addnote_text);

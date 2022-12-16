@@ -148,6 +148,9 @@ public class StoredData {
     public ArrayList<String> getAllPasswords() {
         return getAllData(ID_PASS);
     }
+    public ArrayList<String> getAllNotes(){
+        return getAllData(ID_NOTE);
+    }
     public ArrayList<String> getAllData(String id) {
         ArrayList<String> data = new ArrayList<String>();
 

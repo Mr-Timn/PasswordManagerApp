@@ -6,10 +6,10 @@ import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
-import android.graphics.Color;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Gravity;
+import android.view.KeyEvent;
 import android.view.View;
 import android.widget.Button;
 import android.widget.LinearLayout;
@@ -20,17 +20,27 @@ import java.util.ArrayList;
 public class ViewPasswords extends AppCompatActivity {
     StoredData data;
     LinearLayout ll;
-
     ClipboardManager clipboard;
+    TextView search;
+    ArrayList<String> passwords;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_view_passwords);
 
-        ll = findViewById(R.id.passwordlayout);
+        ll = findViewById(R.id.noteslayout);
         data = new StoredData(getApplicationContext(), getIntent());
         clipboard = (ClipboardManager)getSystemService(Context.CLIPBOARD_SERVICE);
+        search = findViewById(R.id.searchpassword);
+
+        search.setOnKeyListener(new View.OnKeyListener() {
+            @Override
+            public boolean onKey(View view, int i, KeyEvent keyEvent) {
+                loadPasswords();
+                return false;
+            }
+        });
 
         TextView sp = new TextView(getApplicationContext());
         sp.setText("----------------------------------------");
@@ -38,11 +48,18 @@ public class ViewPasswords extends AppCompatActivity {
         sp.setGravity(Gravity.CENTER);
         ll.addView(sp);
 
-        ArrayList<String> passwords = data.getAllPasswords();
+        passwords = data.getAllPasswords();
+        loadPasswords();
+    }
+
+    private void loadPasswords() {
+        ll.removeAllViews();
         for (int i = 0; i < passwords.size(); i++) {
             String pass = passwords.get(i);
             String tu = pass.substring(0, pass.indexOf(StoredData.DATA_DELIM));
             String tp = pass.substring(pass.indexOf(StoredData.DATA_DELIM) + StoredData.DATA_DELIM.length());
+
+            if (search.getText().toString().length() != 0 && !tu.contains(search.getText().toString())) continue;
 
             Log.e("APP_DEBUG", "[LOADED] " + tu + " " + tp);
 
